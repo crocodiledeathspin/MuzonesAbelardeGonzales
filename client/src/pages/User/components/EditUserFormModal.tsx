@@ -1,114 +1,118 @@
-import { useEffect, useState, type FC, type FormEvent } from "react";
+import { useEffect, useState, type FC } from "react";
+import CloseButton from "../../../components/Button/CloseButton";
+import SubmitButton from "../../../components/Button/SubmitButton";
 import FloatingLabelInput from "../../../components/Inputs/FloatingLabelInput";
 import Modal from "../../../components/Modal";
 import FloatingLabelSelect from "../../../components/Select/FloatingLabelSelect";
-import SubmitButton from "../../../components/Button/SubmitButton";
-import CloseButton from "../../../components/Button/CloseButton";
-import type { UserColumns } from "../../../interfaces/UserColumns";
-import type { GenderColumns } from "../../../interfaces/GenderColumns";
+import type { UserColumns } from "../../interfaces/UserColumns";
+import type { GenderColumns } from "../../interfaces/GenderColumns";
+import type { UserfieldErrors } from "../../interfaces/UserFieldErrors";
 import GenderService from "../../../services/GenderService";
-import type { UserFieldErrors } from "../../../interfaces/UserFieldErrors";
 import UserService from "../../../services/UserService";
 
-interface AddUserFormModalProps {
-    onUserAdded: (message: string) => void;
-    isOpen: boolean;
-    onClose: () => void;
-    refreshKey?: () => void;
+interface EditUserFormModalProps {
+  user: UserColumns | null;
+  onUserUpdated: (message: string) => void;
+  refreshKey: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onClose, refreshKey }) => {
-    const [loadingGenders, setLoadingGenders] = useState(false);
-    const [genders, setGenders] = useState<GenderColumns[]>([]);
+const EditUserFormModal: FC<EditUserFormModalProps> = ({
+  user,
+  onUserUpdated,
+  refreshKey,
+  isOpen,
+  onClose,
+}) => {
+  const [loadingGenders, setLoadingGenders] = useState(false);
+  const [genders, setGenders] = useState<GenderColumns[]>([]);
+  const [loadingUpdate, setLoadingUpdate] = useState(false);
 
-    const [loadingStore, setLoadingStore] = useState(false);
-    const [firstName, setFirstName] = useState("");
-    const [middleName, setMiddleName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [suffixName, setSuffixName] = useState("");
-    const [gender, setGender] = useState("");
-    const [birthDate, setBirthDate] = useState("");
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [passwordConfirmation, setPasswordConfirmation] = useState("");
-    const [errors, setErrors] = useState<UserFieldErrors>({});
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [suffixName, setSuffixName] = useState("");
+  const [gender, setGender] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [username, setUsername] = useState("");
+  const [errors, setErrors] = useState<UserFieldErrors>({});
 
-    const handleStoreUser = async (e: FormEvent) => {
-        try {
-            e.preventDefault();
-            setLoadingStore(true);
+  const handleUpdateUser = async (e: FormEvent) => {
+    try {
+      e.preventDefault();
+      setLoadingUpdate(true);
 
-            const payload = {
-                first_name: firstName,
-                middle_name: middleName,
-                last_name: lastName,
-                suffix_name: suffixName,
-                gender: gender,
-                birth_date: birthDate,
-                username: username,
-                password: password,
-                password_confirmation: passwordConfirmation
-            };
+      const payload = {
+        first_name: firstName,
+        middle_name: middleName,
+        last_name: lastName,
+        suffix_name: suffixName,
+        gender: gender,
+        birth_date: birthDate,
+        username: username,
+      };
 
-            const res = await UserService.storeUser(payload);
+      const res = await UserService.updateUser(user?.user_id!, payload);
 
-            if (res.status === 200) {
-                onUserAdded(res.data.message);
-                refreshKey
+      if (res.status === 200) {
+        onUserUpdated(res.data.message);
+        refreshKey();
+        onClose(); // Optional: close modal on success
+      }
+    } catch (error: any) {
+      if (error.response && error.response.status === 422) {
+        setErrors(error.response.data.errors);
+      } else {
+        console.error("Unexpected update error: ", error);
+      }
+    } finally {
+      setLoadingUpdate(false);
+    }
+  };
 
-                setFirstName("");
-                setMiddleName("");
-                setLastName("");
-                setSuffixName("");
-                setGender("");
-                setBirthDate("");
-                setUsername("");
-                setPassword("");
-                setPasswordConfirmation("");
-                setErrors({});
+  const handleLoadGenders = async () => {
+    try {
+      setLoadingGenders(true);
+      const res = await GenderService.loadGenders();
+      if (res.status === 200) {
+        setGenders(res.data.genders);
+        // Sync gender dropdown after options load
+        if (user) setGender(user.gender_id.toString());
+      }
+    } catch (error) {
+      console.error("Error loading genders: ", error);
+    } finally {
+      setLoadingGenders(false);
+    }
+  };
 
-                handleLoadGenders();
-            } else {
-                console.error("Unexpected status error occurred during adding user: ", res.status);
-            }
-        } catch (error: any) {
-            if (error.response && error.response.status === 422) {
-                setErrors(error.response.data.errors);
-            } else {
-                console.log("Unexpected server error occurred during adding user: ", error);
-            }
-        } finally {
-            setLoadingStore(false);
-        }
-    };
+  useEffect(() => {
+    if (isOpen) {
+      handleLoadGenders();
+    }
+  }, [isOpen]);
 
-    const handleLoadGenders = async () => {
-        try {
-            setLoadingGenders(true);
-            const res = await GenderService.loadGenders();
-            if (res.status === 200) {
-                setGenders(res.data.genders);
-            } else {
-                console.error("Unexpected status error occurred during loading genders: ", res.status);
-            }
-        } catch (error) {
-            console.error("Unexpected server error occurred during loading genders: ", error);
-        } finally {
-            setLoadingGenders(false);
-        }
-    };
+  useEffect(() => {
+    // FIX: Only run when modal opens (isOpen) and user data exists
+    if (isOpen && user) {
+      setFirstName(user.first_name);
+      setMiddleName(user.middle_name ?? "");
+      setLastName(user.last_name);
+      setSuffixName(user.suffix_name ?? "");
+      setGender(user.gender_id.toString());
+      setBirthDate(user.birth_date);
+      setUsername(user.username);
+    }
+  }, [isOpen, user]);
 
-    useEffect(() => {
-        if (isOpen){
-         handleLoadGenders();
-        }
-    }, [isOpen]);
 
-    return (
-        <Modal isOpen={isOpen} onClose={onClose} showCloseButton>
-            <form onSubmit={handleStoreUser}>
+  return (
+    <>
+    <Modal isOpen={isOpen} onClose={onClose} showCloseButton>
+            <form  onSubmit={handleUpdateUser}>
                 <h1 className="text-2xl border-b border-gray-100 p-4 font-semibold mb-4">
-                    Add User Form
+                    Edit User Form
                 </h1>
                 <div className="grid grid-cols-2 gap-4 border-b border-gray-100 mb-4">
                     <div className="col-span-2 md:col-span-1">
@@ -202,36 +206,16 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
                                 errors={errors.username}
                             />
                         </div>
-                        <div className="mb-4">
-                            <FloatingLabelInput
-                                label="Password"
-                                type="password"
-                                name="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                errors={errors.password}
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <FloatingLabelInput
-                                label="Password Confirmation"
-                                type="password"
-                                name="password_confirmation"
-                                value={passwordConfirmation}
-                                onChange={(e) => setPasswordConfirmation(e.target.value)}
-                                errors={errors.password_confirmation}
-                            />
-                        </div>
                     </div>
                 </div>
                 <div className="flex justify-end gap-2">
                     <CloseButton label="Close" onClose={onClose} />
-                    <SubmitButton label="Save User" loading={loadingStore} loadingLabel="Saving User" />
+                    <SubmitButton label="Update User" loading={loadingUpdate} loadingLabel="Updating User" />
                 </div>
             </form>
         </Modal>
-    );
+    </>
+  );
 };
 
-export default AddUserFormModal;
+export default EditUserFormModal;

@@ -1,12 +1,11 @@
 import { useEffect, useState, type FC } from "react";
-
 import {
     Table,
     TableBody,
     TableCell,
     TableHeader,
     TableRow
-} from "../../../components/Table"
+} from "../../../components/table"
 import type { GenderColumns } from "../../../interfaces/GenderColumns"
 import GenderService from "../../../services/GenderService"
 import Spinner from "../../../components/Spinner/Spinner"
@@ -29,10 +28,12 @@ const GenderList: FC<GenderListProps> = ({ refreshKey }) => {
             if (res.status === 200) {
                 setGenders(res.data.genders)
             } else {
-                console.error("Unexpected status error occured during loading genders: ", res.status)
+                console.error("Unexpected status error occured during loading genders: ",
+                 res.status)
             }
         } catch (error) {
-            console.error("Unexpected server error occured during loading genders: ", error)
+            console.error("Unexpected server error occured during loading genders: ",
+             error)
         } finally {
             setLoadingGenders(false);
         }
