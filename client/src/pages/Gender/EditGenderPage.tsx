@@ -14,7 +14,7 @@ const EditGenderPage = () => {
     isVisible: toastMessageIsVisible,
     showToastMessage,
     closeToastMessage
-  } = useToastMessage('', false)
+  } = useToastMessage('', false, false)
 
   return (
     <>
