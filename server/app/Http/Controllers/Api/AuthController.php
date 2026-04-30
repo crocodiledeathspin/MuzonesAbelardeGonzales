@@ -46,7 +46,7 @@ return response()->json([
     ], 200);
 }
 
-    public function me(Request $request)
+public function me(Request $request)
 {
     return response()->json([
         'user' => $request->user()->load(['gender'])

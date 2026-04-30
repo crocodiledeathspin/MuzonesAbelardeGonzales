@@ -1,9 +1,19 @@
 import AxiosInstance from "./AxiosInstance";
 
 const UserService = {
-  loadUsers: async () => {
+loadUsers: async (page = 1, search = '') => {
     try {
-      const response = await AxiosInstance.get("/user/loadUsers");
+      const params = new URLSearchParams({ page: page.toString() });
+      if (search) params.append('search', search);
+      const response = await AxiosInstance.get(`/user/loadUsers?${params.toString()}`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+  loadUser: async (userId: string | number) => {
+    try {
+      const response = await AxiosInstance.get(`/user/loadUser/${userId}`);
       return response;
     } catch (error) {
       throw error;
@@ -30,7 +40,7 @@ const UserService = {
   },
   destroyUser: async (userId: string | number) => {
     try {
-      const response = await AxiosInstance.put(`/user/destroyUser/${userId}`);
+      const response = await AxiosInstance.delete(`/user/destroyUser/${userId}`);
       return response;
     } catch (error) {
       throw error;

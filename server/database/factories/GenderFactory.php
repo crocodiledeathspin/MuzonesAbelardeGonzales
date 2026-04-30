@@ -17,8 +17,11 @@ class GenderFactory extends Factory
      */
     public function definition(): array
     {
+        $genders = ['Male', 'Female', 'Other', 'Prefer not to say', 'Non-binary'];
+
         return [
-            //
+            'gender' => fake()->randomElement($genders),
+            'is_deleted' => false,
         ];
     }
 }

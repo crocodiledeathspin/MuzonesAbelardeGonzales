@@ -10,6 +10,7 @@ import type { UserColumns } from "../../../interfaces/UserColumns"
 import UserService from "../../../services/UserService"
 import Spinner from "../../../components/Spinner/Spinner"
 import { Link } from "react-router-dom";
+import FloatingLabelInput from "../../../components/Inputs/FloatingLabelInput";
 
 interface UserListProps {
     onAddUser: () => void;
@@ -20,16 +21,41 @@ interface UserListProps {
 
 const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refreshKey }) => {
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [users, setUsers] = useState<UserColumns[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
 
-    const handleLoadUsers = async () => {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 800);
+
+        return () => clearTimeout(timer);
+    }, [search]);
+
+
+    const handleLoadUsers = async (page: number, append = false, searchTerm: string) => {
         try {
-            setLoadingUsers(true);
+            if (!append) {
+                setLoadingUsers(true);
+            } else {
+                setLoadingMore(true);
+            }
 
-            const res = await UserService.loadUsers();
+            const res = await UserService.loadUsers(page, searchTerm);
 
             if (res.status === 200) {
-                setUsers(res.data.users);
+                const newUsers = Array.isArray(res.data.users) ? res.data.users : [];
+                setHasMore(res.data.has_more_pages || false);
+                if (append) {
+                    setUsers(prev => [...prev, ...newUsers]);
+                } else {
+                    setUsers(newUsers);
+                    setCurrentPage(page);
+                }
             } else {
                 console.error(
                     "Unexpected status error occurred during loading users: ",
@@ -43,6 +69,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
             );
         } finally {
             setLoadingUsers(false);
+            setLoadingMore(false);
         }
     };
 
@@ -64,9 +91,33 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
         return fullName;
     };
 
+    // Remove client-side filtering - server handles it now
+
+    // Load initial page and on search/debounce/refresh
     useEffect(() => {
-        handleLoadUsers();
-    }, [refreshKey]);
+        handleLoadUsers(1, false, debouncedSearch);
+    }, [refreshKey, debouncedSearch]);
+
+    // Infinite scroll
+    const loadMoreUsers = () => {
+        if (hasMore && !loadingMore && !loadingUsers) {
+            handleLoadUsers(currentPage + 1, true, debouncedSearch);
+        }
+    };
+
+    useEffect(() => {
+        const tableContainer = document.querySelector('.overflow-x-auto') as HTMLElement;
+        if (!tableContainer) return;
+
+        const handleScroll = () => {
+            if (tableContainer.scrollHeight - tableContainer.scrollTop <= tableContainer.clientHeight + 100) {
+                loadMoreUsers();
+            }
+        };
+
+        tableContainer.addEventListener('scroll', handleScroll);
+        return () => tableContainer.removeEventListener('scroll', handleScroll);
+    }, [currentPage, hasMore, loadingMore, loadingUsers, debouncedSearch]);
 
     return (
         <>
@@ -75,7 +126,10 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                     <Table>
                         <caption className="mb-4">
                             <div className="border-b border-gray-100">
-                                <div className="p-4 flex justify-end">
+                                <div className="p-4 flex justify-between">
+                                    <div className="w-64">
+                                        <FloatingLabelInput label="Search" type="text" name="search_auto" autoFocus value={search} onChange={(e) => setSearch(e.target.value)} />
+                                    </div>
                                     <button
                                         type="button"
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg transition cursor-pointer"
@@ -96,6 +150,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                                 </TableCell>
                                 <TableCell
                                     isHeader
+                                    colSpan={2}
                                     className="px-5 py-3 font-medium text-start"
                                 >
                                     Full Name
@@ -133,11 +188,32 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                                         <Spinner size="md" />
                                     </TableCell>
                                 </TableRow>
+                            ) : users.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="px-4 py-3 text-center text-gray-500">
+                                        {debouncedSearch ? `No users found for "${debouncedSearch}"` : "No users found."}
+                                    </TableCell>
+                                </TableRow>
                             ) : (
-                                users.map((user, index) => (
+                                users.map((user: UserColumns, index: number) => (
                                     <TableRow className="hover:bg-gray-100" key={index}>
                                         <TableCell className="px-4 py-3 text-center">
                                             {index + 1}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-end">
+                                            {user.profile_picture ? (
+                                                <img
+                                                    src={user.profile_picture}
+                                                    alt={handleUserFullNameFormat(user)}
+                                                    className="object-cover w-10 h-10 rounded-full"
+                                                />
+                                            ) : (
+                                                <div className="relative inline-flex items-center justify-center w-10 h-10 text-center text-sm overflow-hidden bg-gray-300 rounded-full">
+                                                    <span className="font-medium text-gray-600">
+                                                        {`${user.last_name.charAt(0)}${user.first_name.charAt(0)}`}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-start">
                                             {handleUserFullNameFormat(user)}
@@ -172,6 +248,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                                     </TableRow>
                                 ))
                             )}
+
                         </TableBody>
                     </Table>
                 </div>

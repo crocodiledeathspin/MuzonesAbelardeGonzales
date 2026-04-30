@@ -1,5 +1,6 @@
 import { useEffect, useState, type FC, type FormEvent } from "react";
 import FloatingLabelInput from "../../../components/Inputs/FloatingLabelInput";
+import UploadInput from "../../../components/Inputs/UploadingInput";
 import Modal from "../../../components/Modal";
 import FloatingLabelSelect from "../../../components/Select/FloatingLabelSelect";
 import SubmitButton from "../../../components/Button/SubmitButton";
@@ -22,6 +23,7 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
     const [genders, setGenders] = useState<GenderColumns[]>([]);
 
     const [loadingStore, setLoadingStore] = useState(false);
+    const [addUserProfilePicture, setAddUserProfilePicture] = useState<File | null>(null);
     const [firstName, setFirstName] = useState("");
     const [middleName, setMiddleName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -37,24 +39,29 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
         try {
             e.preventDefault();
             setLoadingStore(true);
+            
+            const formData = new FormData();
+            
+            if (addUserProfilePicture) {
+                formData.append("add_user_profile_picture", addUserProfilePicture)
+            }
 
-            const payload = {
-                first_name: firstName,
-                middle_name: middleName,
-                last_name: lastName,
-                suffix_name: suffixName,
-                gender: gender,
-                birth_date: birthDate,
-                username: username,
-                password: password,
-                password_confirmation: passwordConfirmation
-            };
+            formData.append("first_name", firstName);
+            formData.append("middle_name", middleName  || "");
+            formData.append("last_name", lastName);
+            formData.append("suffix_name", suffixName  || "");
+            formData.append("gender", gender);
+            formData.append("birth_date", birthDate);
+            formData.append("username", username);
+            formData.append("password", password);
+            formData.append("password_confirmation", passwordConfirmation);
 
-            const res = await UserService.storeUser(payload);
+            const res = await UserService.storeUser(formData);
 
             if (res.status === 200) {
+                setAddUserProfilePicture(null);
                 onUserAdded(res.data.message);
-                refreshKey
+                refreshKey?.();
 
                 setFirstName("");
                 setMiddleName("");
@@ -67,7 +74,7 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
                 setPasswordConfirmation("");
                 setErrors({});
 
-                handleLoadGenders();
+                onClose();
             } else {
                 console.error("Unexpected status error occurred during adding user: ", res.status);
             }
@@ -110,6 +117,11 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
                 <h1 className="text-2xl border-b border-gray-100 p-4 font-semibold mb-4">
                     Add User Form
                 </h1>
+                <div className="mb4">
+                    <UploadInput label="Profile Picture" name="add_user_profile_picture" value={addUserProfilePicture} 
+onChange={setAddUserProfilePicture} errors={errors.add_user_profile_picture}
+                    />
+                </div>
                 <div className="grid grid-cols-2 gap-4 border-b border-gray-100 mb-4">
                     <div className="col-span-2 md:col-span-1">
                         <div className="mb-4">

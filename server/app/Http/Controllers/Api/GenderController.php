@@ -9,7 +9,7 @@ use App\Models\Gender;
 class GenderController extends Controller
 {
     public function loadGenders() {
-        $genders = Gender::where('tbl_genders.is_deleted', false)
+        $genders = Gender::where('is_deleted', false)
         ->get();
 
         return response()->json([

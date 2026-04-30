@@ -1,4 +1,4 @@
-<?php
+x<?php
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GenderController;
@@ -12,23 +12,23 @@ Route::controller(AuthController::class)->prefix('/auth')->group(function() {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::controller(AuthController::class)->prefix('/auth')->group(function() {
-    Route::get('/me', 'me');
-    Route::post('/logout', 'logout');
-});
+        Route::get('/me', 'me');
+        Route::post('/logout', 'logout');
+    });
 
-    Route::controller(GenderController::class)->prefix('/gender')->group(function() {
+Route::controller(GenderController::class)->prefix('/gender')->group(function() {
         Route::get('/loadGenders', 'loadGenders'); // /gender/loadGenders
         Route::get('/getGender/{genderId}', 'getGender');
         Route::post('/storeGender', 'storeGender'); // /gender/storeGender
-        Route::put('/updateGender/{gender}', 'updateGender');
-        Route::put('/destroyGender/{gender}', 'destroyGender');
+        Route::put('/updateGender/{genderId}', 'updateGender');
+        Route::put('/destroyGender/{genderId}', 'destroyGender');
     });
 
     Route::controller(UserController::class)->prefix('/user')->group(function() {
         Route::get('/loadUsers', 'loadUsers');
         Route::post('/storeUser', 'storeUser');
-        Route::put('/updateUser/{user}', 'updateUser');
-        Route::put('/destroyUser/{user}', 'destroyUser');
+        Route::put('/updateUser/{user_id}', 'updateUser');
+        Route::put('/destroyUser/{user_id}', 'destroyUser');
     });
 });
 

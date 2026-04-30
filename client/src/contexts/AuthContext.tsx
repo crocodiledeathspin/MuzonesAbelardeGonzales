@@ -29,7 +29,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
             if (res.status === 200) {
                 localStorage.setItem('token', res.data.token);
-                setUser(res.data)
+                setUser({ user: res.data.user })
             } else {
                 console.error('Unexpected status error occurred during logging user in: ', res.status)
             }
@@ -54,7 +54,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
                 const res = await AuthService.me();
 
                 if (res.status === 200) {
-                    setUser(res.data);
+                    setUser({ user: res.data.user });
                 } else {
                     localStorage.removeItem("token");
                     setUser(null);

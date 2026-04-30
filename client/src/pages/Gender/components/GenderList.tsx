@@ -26,7 +26,7 @@ const GenderList: FC<GenderListProps> = ({ refreshKey }) => {
             const res = await GenderService.loadGenders()
 
             if (res.status === 200) {
-                setGenders(res.data.genders)
+                setGenders(res.data?.genders || [])
             } else {
                 console.error("Unexpected status error occured during loading genders: ",
                  res.status)
