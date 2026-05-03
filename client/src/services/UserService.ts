@@ -29,10 +29,10 @@ loadUsers: async (page = 1, search = '') => {
   },
   updateUser: async (userId: string | number, data: any) => {
     try {
-      const response = await AxiosInstance.put(
-        `/user/updateUser/${userId}`,
-        data,
-      );
+      if (data instanceof FormData) {
+        data.append('_method', 'PUT');
+      }
+      const response = await AxiosInstance.post(`/user/updateUser/${userId}`, data);
       return response;
     } catch (error) {
       throw error;
@@ -40,7 +40,7 @@ loadUsers: async (page = 1, search = '') => {
   },
   destroyUser: async (userId: string | number) => {
     try {
-      const response = await AxiosInstance.delete(`/user/destroyUser/${userId}`);
+      const response = await AxiosInstance.post(`/user/destroyUser/${userId}`, { _method: 'PUT' });
       return response;
     } catch (error) {
       throw error;

@@ -53,6 +53,7 @@ const FloatingLabelInput: FC<FloatingLabelInputProps> = ({
                     autoFocus={autoFocus}
                     disabled={disabled}
                     readOnly={readOnly}
+                    required={required}
                 />
                 <label
                     htmlFor={name}

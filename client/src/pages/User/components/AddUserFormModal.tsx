@@ -232,6 +232,7 @@ onChange={setAddUserProfilePicture} errors={errors.add_user_profile_picture}
                                 name="password_confirmation"
                                 value={passwordConfirmation}
                                 onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                required
                                 errors={errors.password_confirmation}
                             />
                         </div>

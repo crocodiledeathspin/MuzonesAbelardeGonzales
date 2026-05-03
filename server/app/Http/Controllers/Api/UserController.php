@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -94,16 +94,16 @@ if($request->hasFile('add_user_profile_picture')) {
 
     public function updateUser(Request $request, User $user)
     {
-        $validated = $request->validate([
-            'edit_user_profile_picture' => ['nullable', 'image', 'mimes:png,jpg,jpeg'],
-            'first_name' => ['required', 'max:55'],
-            'middle_name' => ['nullable', 'max:55'],
-            'last_name' => ['required', 'max:55'],
-            'suffix_name' => ['nullable', 'max:55'],
-            'gender' => ['required'],
-            'birth_date' => ['required', 'date'],
-            'username' => ['required', 'min:6', 'max:12', Rule::unique('tbl_users', 'username')->ignore($user)]
-        ]);
+    $validated = $request->validate([
+        'edit_user_profile_picture' => ['nullable', 'image', 'mimes:png,jpg,jpeg'],
+        'first_name' => ['required', 'max:55'],
+        'middle_name' => ['nullable', 'max:55'],
+        'last_name' => ['required', 'max:55'],
+        'suffix_name' => ['nullable', 'max:55'],
+        'gender' => ['required'],
+        'birth_date' => ['required', 'date'],
+        'username' => ['sometimes', 'min:6', 'max:12', Rule::unique('tbl_users', 'username')->ignore($user->user_id, 'user_id')]
+    ]);
 if ($request->hasFile('edit_user_profile_picture')) {
     if ($user->profile_picture && Storage::exists('public/img/user/profile_pictures/' . $user->profile_picture)) {
         Storage::delete('public/img/user/profile_pictures/' . $user->profile_picture);
@@ -140,6 +140,8 @@ $user->update([
             'age' => $age,
             'username' => $validated['username']
         ]);
+
+        $user->refresh();
 
         $user->profile_picture = $user->profile_picture ? url('storage/img/user/profile_pictures/' . $user->profile_picture) : null;
 
