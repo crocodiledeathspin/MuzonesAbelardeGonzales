@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -36,7 +36,9 @@ class UserController extends Controller
         $users = $query->paginate(15)->appends($request->query());
         
         $users->getCollection()->transform(function ($user) {
-            $user->profile_picture = $user->profile_picture ? url('storage/img/user/profile_pictures/' . $user->profile_picture) : null;
+            $user->profile_picture = $user->profile_picture ? url('storage/public/img/user/profile_pictures/' . 
+            $user->profile_picture) : null;
+
             return $user;
         });
         
@@ -141,7 +143,9 @@ $user->update([
             'username' => $validated['username']
         ]);
 
-        $user->profile_picture = $user->profile_picture ? url('storage/img/user/profile_pictures/' . $user->profile_picture) : null;
+        $user ->refresh();
+        $user->profile_picture = $user->profile_picture ? url('storage/public/img/user/profile_pictures/' . 
+        $user->profile_picture) : null;
 
         return response()->json([
             'message' => 'User Successfully Updated.',

@@ -1,6 +1,5 @@
 import AxiosInstance from "./AxiosInstance";
 
-
 const AuthService = {
     login: async (data: any) => {
         try {
@@ -10,7 +9,6 @@ const AuthService = {
             throw error;
         }
     },
-
     logout: async () => {
         try {
             const response = await AxiosInstance.post("/auth/logout");
@@ -19,7 +17,6 @@ const AuthService = {
             throw error;
         }
     },
-
     me: async () => {
         try {
             const response = await AxiosInstance.get("/auth/me");

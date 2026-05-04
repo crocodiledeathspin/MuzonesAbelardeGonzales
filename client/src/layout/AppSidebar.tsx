@@ -6,18 +6,18 @@ const AppSidebar = () => {
 
     const sidebarItems = [
         {
-            path: '/gender',
-            text: 'Gender List',
-
+            path: "/genders",
+            text: "Genders",
         },
         {
-            path: '/users',
-            text: 'User List',
-        }
-    ]
-     return (
+            path: "/users",
+            text: "Users",
+        },
+    ];
+
+    return (
         <>
-            {isOpen && (
+            {!isOpen && (
                 <div
                     className="fixed inset-0 z-30 blur-lg sm:hidden"
                     onClick={toggleSidebar}

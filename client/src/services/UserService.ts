@@ -1,24 +1,19 @@
 import AxiosInstance from "./AxiosInstance";
 
 const UserService = {
-loadUsers: async (page = 1, search = '') => {
+  loadUsers: async (page: number, search: string) => {
     try {
-      const params = new URLSearchParams({ page: page.toString() });
-      if (search) params.append('search', search);
-      const response = await AxiosInstance.get(`/user/loadUsers?${params.toString()}`);
+      const response = await AxiosInstance.get(
+        search
+          ? `/user/loadUsers?page=${page}&search=${search}`
+          : `/user/loadUsers?page=${page}`,
+      );
       return response;
     } catch (error) {
       throw error;
     }
   },
-  loadUser: async (userId: string | number) => {
-    try {
-      const response = await AxiosInstance.get(`/user/loadUser/${userId}`);
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  },
+
   storeUser: async (data: any) => {
     try {
       const response = await AxiosInstance.post("/user/storeUser", data);
@@ -29,7 +24,7 @@ loadUsers: async (page = 1, search = '') => {
   },
   updateUser: async (userId: string | number, data: any) => {
     try {
-      const response = await AxiosInstance.put(
+      const response = await AxiosInstance.post(
         `/user/updateUser/${userId}`,
         data,
       );
@@ -40,12 +35,12 @@ loadUsers: async (page = 1, search = '') => {
   },
   destroyUser: async (userId: string | number) => {
     try {
-      const response = await AxiosInstance.delete(`/user/destroyUser/${userId}`);
+      const response = await AxiosInstance.put(`/user/destroyUser/${userId}`);
       return response;
     } catch (error) {
       throw error;
     }
   },
 };
-    
+
 export default UserService;

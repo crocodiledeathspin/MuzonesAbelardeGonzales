@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
-const AxiosInstance = axios.create({ baseURL });
+const AxiosInstance = axios.create({baseURL: 'http://127.0.0.1:8000/api'});
 
 AxiosInstance.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
@@ -24,9 +23,10 @@ AxiosInstance.interceptors.response.use(
         return response;
     },
     (error) => {
-        if (error.response?.status !== 422) {
-            console.error("Unexpected response error:", error);
+        if (error.response.status !== 422) {
+            console.error("Unexpected response error: ", error);
         }
+
         return Promise.reject(error);
     }
 );

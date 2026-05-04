@@ -10,43 +10,59 @@ import type { UserDetails } from "../interfaces/AuthInterface";
 import AuthService from "../services/AuthService";
 
 interface AuthContextType {
-    user: UserDetails | null
-    loading: boolean
-    login: (username: string, password: string) => void
-    logout: () => void
+    user: UserDetails | null;
+    loading: boolean;
+    login: (username: string, password: string) => void;
+    logout: () => void;
+    refreshUser: () => Promise<void>;
 }
 
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<UserDetails | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [user, setUser] = useState<UserDetails | null>(null);
+    const [loading, setLoading] = useState(true);
 
     const login = async (username: string, password: string) => {
         try {
-            const res = await AuthService.login({ username, password })
+            const res = await AuthService.login({ username, password });
 
             if (res.status === 200) {
                 localStorage.setItem('token', res.data.token);
-                setUser({ user: res.data.user })
+                setUser(res.data);
             } else {
-                console.error('Unexpected status error occurred during logging user in: ', res.status)
+                console.error('Unexpected status error occurred during logging user in: ', res.status);
             }
         } catch (error) {
-            console.error('Unexpected server error occurred during logging user in: ', error)
-            throw error
+            console.error('Unexpected server error occurred during logging user in: ', error);
+            throw error;
         }
-    }
+    };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        setUser(null);
-    }
+    const logout = async () => {
+        try {
+            const res = await AuthService.logout();
+
+            if (res.status === 200) {
+                localStorage.removeItem("token");
+                setUser(null);
+            } else {
+                console.error(
+                    "Unexpected status error occurred during logging user out: ",
+                    res.status
+                );
+            }
+        } catch (error) {
+            console.error(
+                "Unexpected server error occurred during logging user out: ",
+                error
+            );
+            throw error;
+        }
+    };
 
     const checkAuth = async () => {
         setLoading(true);
-
         const token = localStorage.getItem("token");
 
         if (token) {
@@ -54,7 +70,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
                 const res = await AuthService.me();
 
                 if (res.status === 200) {
-                    setUser({ user: res.data.user });
+                    setUser(res.data);
                 } else {
                     localStorage.removeItem("token");
                     setUser(null);
@@ -73,30 +89,34 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
                     error
                 );
             }
-            setLoading(false);
         } else {
             setUser(null);
-            setLoading(false)
         }
+        setLoading(false);
+    };
+
+    // We define refreshUser as an alias to checkAuth so your components can trigger a re-fetch
+    const refreshUser = async () => {
+        await checkAuth();
     };
 
     useEffect(() => {
         checkAuth();
-    }, [])
+    }, []);
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
-    )
-}
+    );
+};
 
 export const useAuth = () => {
-    const context = useContext(AuthContext)
+    const context = useContext(AuthContext);
 
     if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider')
+        throw new Error("useAuth must be used within an AuthProvider");
     }
 
     return context;
-}
+};
